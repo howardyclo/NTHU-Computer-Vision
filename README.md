@@ -1,9 +1,9 @@
 # NTHU-Computer-Vision
 
-NTHU CS6550 Computer Vision slides and my code solutions for spring semester 2017.
+NTHU CS6550 Computer Vision slides and my code solutions for fall semester 2016.
 
 ## Notes
-- The assignments are mainly required to implement the Computer Vision problems using `matlab`.
+The assignments are mainly required to implement the Computer Vision problems using `matlab`.
 
 ## Syllabus
 1. Image Formation (1 week)
