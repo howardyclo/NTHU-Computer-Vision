@@ -1,0 +1,17 @@
+%% Clear all the histories
+clc;clear;close all;
+
+%% Modify the TASK variable to perform different tasks in Part 1
+% TASK can be 'A', 'B', 'C', ..., 'F'
+TASK = 'A'; 
+
+%% Perform Part 2-A
+if TASK == 'A'
+% read images and convert them to grayscale
+kobe = rgb2gray(imread('kobeFace.png'));
+gasol = rgb2gray(imread('gasolFace.png'));
+% compute LBPs for images
+kobeLBP = LBP.computeLBP(kobe);
+imshow(uint8(kobeLBP));
+
+end

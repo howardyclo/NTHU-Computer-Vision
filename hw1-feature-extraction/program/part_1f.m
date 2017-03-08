@@ -1,0 +1,87 @@
+%% Clear all the histories
+clc;clear;close all;
+
+%% Constant for control
+% if QUICK_DEMO == 1(true), load results from mat file instead of computing
+% else, compute result again.
+QUICK_DEMO = 1;
+
+%%  Perform Part 1-E
+
+if QUICK_DEMO == 1
+    load('part_1f_result');
+else
+    % read image
+    I = imread('J4Poro.png');
+    % convert images to grayscale
+    I = rgb2gray(I);
+    % normalize images to [0-255] to [0-1]
+    I = im2double(I);
+    % generate rotated(by 30 degree) image and scaled(to 0.5x) image
+    rotated_I = imrotate(I, 30);
+    scaled_I = imresize(I, 0.5);
+    % define params for guassian filter
+    kernel_size = 10;
+    sigma = 5;
+    % apply guassian filter
+    Ig = CornerDetection.gaussianFilter(I, kernel_size, sigma);
+    rotated_Ig = CornerDetection.gaussianFilter(rotated_I, kernel_size, sigma);
+    scaled_Ig = CornerDetection.gaussianFilter(scaled_I, kernel_size, sigma);
+    % compute magnitude and direction of gradient of image
+    [grad_mag1, grad_dir1] = CornerDetection.imgradient(Ig);
+    [grad_mag2, grad_dir2] = CornerDetection.imgradient(rotated_Ig);
+    [grad_mag3, grad_dir3] = CornerDetection.imgradient(scaled_Ig);
+    % detect corners for original, rotated, scaled images with window size = 3
+    Ieig1 = CornerDetection.detectCorner(grad_mag1, 3);
+    Ieig2 = CornerDetection.detectCorner(grad_mag2, 3);
+    Ieig3 = CornerDetection.detectCorner(grad_mag3, 3);
+    % compute largest eigenvalue for every Ieigs, 
+    % then multiply a constant as their threshold value for corner detection respectivley.
+    threshold1 = 0.05 * max(max(Ieig1));
+    threshold2 = 0.05 * max(max(Ieig2));
+    threshold3 = 0.05 * max(max(Ieig3));
+    % perform non-maximum suppression for 3 corner images with their own thresholds
+    Ieig1 = CornerDetection.nonMaximumSuppression(Ieig1, threshold1);
+    Ieig2 = CornerDetection.nonMaximumSuppression(Ieig2, threshold2);
+    Ieig3 = CornerDetection.nonMaximumSuppression(Ieig3, threshold3);
+    
+    % inverse rotated image position(and mapped eigenvalue matrix) to original.
+    inverse_rotated_I = imrotate(rotated_I, -30);
+    Ieig2 = imrotate(Ieig2, -30);
+    % find black pixels
+    [posc, posr] = find(inverse_rotated_I > 0);
+    position = [posr, posc];
+    % find image position
+    min_xy = min(position);
+    max_xy = max(position);
+    min_x = min_xy(1);
+    min_y = min_xy(2);
+    max_x = max_xy(1);
+    max_y = max_xy(2);
+    % crop eigenvalue matrix with original image position
+    Ieig2 = imcrop(Ieig2, [min_x, min_y, (max_x-min_x), (max_y-min_y)]);
+    
+    % rescale eigenvalue matrix to original image size
+    Ieig3 = imresize(Ieig3, 2);
+
+    % save results to 'part_1e_result.mat' file
+    save('part_1f_result', 'I');
+    save('part_1f_result', 'rotated_I', '-append');
+    save('part_1f_result', 'scaled_I', '-append');
+    save('part_1f_result', 'Ieig1', '-append');
+    save('part_1f_result', 'Ieig2', '-append');
+    save('part_1f_result', 'Ieig3', '-append');
+    save('part_1f_result', 'threshold1', '-append');
+    save('part_1f_result', 'threshold2', '-append');
+    save('part_1f_result', 'threshold3', '-append');
+end
+% get corner positions on original, rotated, scaled images.
+[posc1, posr1] = find(Ieig1 > threshold1);
+[posc2, posr2] = find(Ieig2 > threshold2);
+[posc3, posr3] = find(Ieig3 > threshold3);
+% plot them to original image
+figure('Name', 'Corners(Original=Red, Rotate=Green, Scale=Blue)'), imshow(I);
+hold on;
+plot(posr1, posc1, 'r.');
+plot(posr2, posc2, 'g.');
+plot(posr3, posc3, 'b.');

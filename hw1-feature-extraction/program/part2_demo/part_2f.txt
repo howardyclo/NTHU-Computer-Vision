@@ -1,0 +1,5 @@
+Similarity (2x2 case):0.97843
+Similarity (3x3 case):0.97442
+Similarity (4x4 case):0.95886
+Similarity (9x9 case):0.87494
+Similarity (20x20 case):0.70835

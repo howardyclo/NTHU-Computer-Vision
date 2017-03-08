@@ -1,0 +1,52 @@
+%% Clear all the histories
+clc;clear;close all;
+
+%% Constant for control
+% if QUICK_DEMO == 1(true), load results from mat file instead of computing
+% else, compute result again.
+QUICK_DEMO = 0;
+
+%% Perform Part 2-B
+if QUICK_DEMO == 1
+    % load part 2-B result
+    load('part_2b_result');
+else
+    % load Hillary and Trump's four 2D points
+    load('part_2_input');
+    % load homography such that left(hillary) = H * right(trump)
+    load('part_2a_result');
+    % read image
+    img = im2double(imread('debate.jpg'));
+    img_new = repmat(img, 1);
+    % compute boundaries of 2 image (0: none, 1: hillary/trump region)
+    hillary_boundary = zeros(size(img,1), size(img,2));
+    hillary_boundary = roipoly(hillary_boundary, hillaryPoint2D(:,1), hillaryPoint2D(:,2));
+    trump_boundary = zeros(size(img,1), size(img,2));
+    trump_boundary = roipoly(trump_boundary, trumpPoint2D(:,1), trumpPoint2D(:,2));
+    % find all pixels' position in hillary/trump region, and convert to homogeneuos coord. 
+    [cols, rows] = find(hillary_boundary == 1);
+    left_points = [rows'; cols']';
+    left_points(:,3) = 1;
+    [cols, rows] = find(trump_boundary == 1);
+    right_points = [rows'; cols']';
+    right_points(:,3) = 1;
+    % compute left = H * right
+    % replace right image region (trump) with left image region (hillary)
+    left_projected_points = (H * right_points')';
+    left_projected_points(:,1) = left_projected_points(:,1) ./ left_projected_points(:,3);
+    left_projected_points(:,2) = left_projected_points(:,2) ./ left_projected_points(:,3);
+    left_projected_points(:,3) = 1;
+    % compute right = inv(H) * left
+    % replace left image region (hillary) with right image region (trump)
+    right_projected_points = (inv(H) * left_points')';
+    right_projected_points(:,1) = right_projected_points(:,1) ./ right_projected_points(:,3);
+    right_projected_points(:,2) = right_projected_points(:,2) ./ right_projected_points(:,3);
+    right_projected_points(:,3) = 1;
+    
+    % perform backward wrapping using bilinear interpolation to get left
+    % image region's new pixel value
+    img_new = backwardWrap(img, img_new, right_projected_points, left_points);
+    % perform backward wrapping using bilinear interpolation to get right
+    % image region's new pixel value
+    img_new = backwardWrap(img, img_new, left_projected_points, right_points);
+end
